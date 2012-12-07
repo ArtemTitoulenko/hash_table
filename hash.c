@@ -27,9 +27,10 @@ struct hash_table * hash_table_new(int size, void (* free_node)(void *)) {
     return NULL;
   }
 
-  table->size = 0;
   table->size = size;
   table->population = 0;
+  table->growth_proportion = 0.7;
+  table->shrink_proportion = 0.25;
   table->free_node = free_node;
   table->storage = calloc(table->size, sizeof(struct hash_node *));
 
@@ -65,9 +66,11 @@ void hash_table_free(struct hash_table *table) {
   free(table);
 }
 
-
-
 int hash_table_store(struct hash_table * table, char * word, void * elem) {
+  hash_table_store_with_resize(table, word, elem, 1);
+}
+
+int hash_table_store_with_resize(struct hash_table * table, char * word, void * elem, int consider_resize) {
   struct hash_node * dummy = table->storage[lua_hash(word)%table->size];
 
   if (dummy) {
@@ -95,7 +98,8 @@ int hash_table_store(struct hash_table * table, char * word, void * elem) {
 		table->population ++;
   }
 
-  if ((float)table->population/(float)table->size > HASH_TABLE_RESIZE_PROPORTION) {
+
+  if (consider_resize) {
     hash_table_resize(table);
   }
 
@@ -114,6 +118,8 @@ int hash_table_delete(struct hash_table * table, char * word) {
       }
 
       hash_node_free(head, table->free_node);
+      table->population--;
+      hash_table_resize(table);
       return 0;
     }
 
@@ -125,27 +131,34 @@ int hash_table_delete(struct hash_table * table, char * word) {
 }
 
 void hash_table_resize(struct hash_table * table) {
-  int i = 0, keys_in_old_hash;
+  int i = 0, keys_in_old_hash = table->size;
+  struct hash_node ** new_storage;
+  float proportion = (float)table->population/(float)table->size;
 
-  struct hash_node ** new_storage = calloc(table->size * 2, sizeof(struct hash_node *));
-  struct hash_node ** old_storage = table->storage;
+  if (proportion > table->growth_proportion) {
+    new_storage = calloc(table->size * 2, sizeof(struct hash_node *));
+    table->size = table->size * 2;
+  } else if (proportion < table->shrink_proportion && table->size > 1) {
+    new_storage = calloc(table->size / 2, sizeof(struct hash_node *));
+    table->size = table->size / 2;
+  } else {
+    return;
+  }
 
   if (new_storage == NULL) {
     return;
   }
 
-  keys_in_old_hash = table->size;
-
+  struct hash_node ** old_storage = table->storage;
   table->population = 0;
   table->storage = new_storage;
-  table->size = table->size * 2;
 
   /* rehash all elements */
   for (; i < keys_in_old_hash; i++) {
     if (old_storage[i] != NULL) {
       struct hash_node * node = old_storage[i];
       while(node) {
-        hash_table_store(table, node->word, node->data);
+        hash_table_store_with_resize(table, node->word, node->data, 0);
         node = node->next;
       }
     }

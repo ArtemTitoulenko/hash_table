@@ -13,6 +13,10 @@ struct hash_node {
 struct hash_table {
   int size;
   int population;
+
+  float growth_proportion;
+  float shrink_proportion;
+
   void (* free_node)(void*);
   struct hash_node ** storage;
 };
@@ -25,6 +29,7 @@ void hash_node_free(struct hash_node * node, void (*free_data)(void*));
 struct hash_table* hash_table_new(int size, void (* free_node)(void *));
 void hash_table_free(struct hash_table * table);
 int hash_table_store(struct hash_table * table, char * word, void * node);
+int hash_table_store_with_resize(struct hash_table * table, char * word, void * node, int consider_resize);
 int hash_table_delete(struct hash_table * table, char * word);
 void hash_table_resize(struct hash_table * table);
 struct hash_node * hash_table_get_hash_node(struct hash_table * table, char * word);
