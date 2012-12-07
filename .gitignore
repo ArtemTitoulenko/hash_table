@@ -1,0 +1,4 @@
+.DS_Store
+hash.o
+main.o
+./hash
