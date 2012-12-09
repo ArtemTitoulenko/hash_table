@@ -67,7 +67,7 @@ void hash_table_free(struct hash_table *table) {
 }
 
 int hash_table_store(struct hash_table * table, char * word, void * elem) {
-  hash_table_store_with_resize(table, word, elem, 1);
+  return hash_table_store_with_resize(table, word, elem, 1);
 }
 
 int hash_table_store_with_resize(struct hash_table * table, char * word, void * elem, int consider_resize) {
