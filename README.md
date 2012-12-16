@@ -1,6 +1,6 @@
 # hash_table
 
-This is a short (255 loc), simple hash table implementation in C. It has evolved over the year and has been rewritten at least once. It attempts to offer some comforts, but don't expect many niceties.
+This is a short (288 loc), simple hash table implementation in C. It has evolved over the year and has been rewritten at least once. It attempts to offer some comforts, but don't expect many niceties.
 
 ## EXAMPLE
 
@@ -68,7 +68,6 @@ The example application can be built by running `make` or `make test`. A static 
       float growth_proportion;
       float shrink_proportion;
     
-      void (* free_node)(void*);
       struct hash_node ** storage;
     };
 

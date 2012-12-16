@@ -17,7 +17,6 @@ struct hash_table {
   float growth_proportion;
   float shrink_proportion;
 
-  void (* free_node)(void*);
   struct hash_node ** storage;
 };
 

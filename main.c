@@ -9,11 +9,6 @@ struct client {
   int credit;
 };
 
-void free_client(void * a) {
-  struct client * cli = (struct client *)a;
-  free(cli);
-}
-
 int main(int argc, char ** argv) {
 	int i;
   struct hash_table * table = hash_table_new(1);
