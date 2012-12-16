@@ -14,16 +14,10 @@ This is a short (255 loc), simple hash table implementation in C. It has evolved
       const char * name;
       int credit;
     };
-    
-    void free_client(void * a) {
-      struct client * cli = (struct client *)a;
-      int i = 0;
-      free(cli);
-    }
-    
+
     int main(int argc, char ** argv) {
-      /* create a new hash table, (table size, free_func)
-      struct hash_table * table = hash_table_new(1, free_client);
+      /* create a new hash table, (table size)
+      struct hash_table * table = hash_table_new(1);
     
       struct client * cli = malloc(sizeof(struct client));
       cli->name = "foo bar"; cli->credit = 5;
@@ -35,16 +29,27 @@ This is a short (255 loc), simple hash table implementation in C. It has evolved
       cli->name = "far bar"; cli->credit = 6;
       hash_table_store(table, cli->name, cli);
       
-      /* delete an element at a key, (table, key) */
-      printf("deleting: %i, should be 0\n", hash_table_delete(table, "foo bar"));
-      printf("deleting: %i, should be 1\n", hash_table_delete(table, "doesn't exist"));
+      cli = hash_table_delete(table, "foo bar"); /* returns the deleted value */
+      printf("deleting: %i, should be 1\n", cli != NULL);
+      cli = hash_table_delete(table, "doesn't exist"); /* returns NULL */
+      printf("deleting: %i, should be 1\n", cli == NULL);
     
       /* get the value for a key, (table, key) */
       struct client * cl2 = hash_table_get(table, "far bar");
       printf("%s has %i money\n", cl2->name, cl2->credit);
+      
+      /* get all of the keys and list them */
+      char ** keys = hash_table_get_all_keys(table);
+      for (i = 0; i < table->population; i++) {
+        printf("key: %s\n", keys[i]);
+      }
+      
+      free(keys);
+      free(cli);
+      free(cl2);
     
-      /* free the table, and all of it's values automagically*/
-      hash_table_free(table);
+      /* free the table automagically*/
+      hash_table_destroy(table);
       return 0;
     }
     
@@ -54,21 +59,38 @@ The example application can be built by running `make` or `make test`. A static 
 
 ## DOCUMENTATION
 
-### hash_table_new(int size, void (\*free_func)(void \*))
+### struct hash_table
 
-Creates a new `struct hash_table *` and takes an initial size for the hash table storage and a function that takes one `void *` that will perform the necessary cleanup for your struct. `free_func` cannot be `NULL`.
+    struct hash_table {
+      int size;
+      int population;
+    
+      float growth_proportion;
+      float shrink_proportion;
+    
+      void (* free_node)(void*);
+      struct hash_node ** storage;
+    };
 
-### int hash_table_store(\* table, char \* word, void \* elem)
+### hash_table_new(int size)
 
-Store an element `elem` in `table` under the key `word`. Theoretically, `elem` can be any kind of object, however the `free_func`, mentioned before, may segfault. Store may also replace elements if there is an element stored under `word` already. The old element is free'd with the `free_func` passed into `hash_table_new`. Returns 0 if successful, 1 otherwise.
+Creates a new `struct hash_table *` and takes an initial size for the hash table storage. This storage will grow and shrink based on ratio's defined by `.growth_proportion` (default: 0.7), and `.shrink_proportion` (default: 0.25).
+
+### void \* hash_table_store(\* table, char \* word, void \* elem)
+
+Store an element `elem` in `table` under the key `word`. Store may also replace elements if there is an element stored under `word` already. The old element is passed back if it is replaced, otherwise NULL is returned.
 
 ### void \* hash_table_get(\* table, char \* word)
 
-Retrieves the element stored at `word`, `NULL` otherwise.
+Retrieves the element stored at `word`, otherwise `NULL`.
 
-### int hash_table_delete(\* table, char \* word)
+### void \* hash_table_delete(\* table, char \* word)
 
-Attempts to delete an element from the hash table. Returns 0 on success, 1 otherwise.
+Attempts to delete an element from the hash table. Returns the element that was deleted, otherwise `NULL`.
+
+### char \*\* hash_table_get_all_keys(\* table)
+
+Returns an array of `char *`'s that point to all of the keys in the table.  
 
 ## LICENSE
 

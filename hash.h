@@ -21,20 +21,29 @@ struct hash_table {
   struct hash_node ** storage;
 };
 
-
+/* hash node structures */
 struct hash_node * hash_node_new(char * word, void * elem);
-void hash_nodes_free(struct hash_node * node, void (*free_data)(void *));
-void hash_node_free(struct hash_node * node, void (*free_data)(void*));
+void hash_nodes_free(struct hash_node * node);
+void hash_node_free(struct hash_node * node);
 
-struct hash_table* hash_table_new(int size, void (* free_node)(void *));
-void hash_table_free(struct hash_table * table);
-int hash_table_store(struct hash_table * table, char * word, void * node);
-int hash_table_store_with_resize(struct hash_table * table, char * word, void * node, int consider_resize);
-int hash_table_delete(struct hash_table * table, char * word);
-void hash_table_resize(struct hash_table * table);
-struct hash_node * hash_table_get_hash_node(struct hash_table * table, char * word);
+/* hash table create and destroy */
+struct hash_table* hash_table_new(int size);
+void hash_table_destroy(struct hash_table * table);
+
+/* store */
+void * hash_table_store(struct hash_table * table, char * word, void * node);
+void * hash_table_store_with_resize(struct hash_table * table, char * word, void * node, int consider_resize);
+
+/* get */
 void * hash_table_get(struct hash_table * table, char * word);
 char ** hash_table_get_all_keys(struct hash_table * table);
+
+/* delete */
+void * hash_table_delete(struct hash_table * table, char * word);
+
+void hash_table_resize(struct hash_table * table);
+struct hash_node * hash_table_get_hash_node(struct hash_table * table, char * word);
+
 
 int lua_hash(char *str);
 

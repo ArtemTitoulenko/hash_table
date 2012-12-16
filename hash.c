@@ -18,7 +18,7 @@ struct hash_node * hash_node_new(char * word, void * elem) {
   return node;
 }
 
-struct hash_table * hash_table_new(int size, void (* free_node)(void *)) {
+struct hash_table * hash_table_new(int size) {
   struct hash_table * table = malloc(sizeof(struct hash_table));
   assert(table != NULL);
 
@@ -31,7 +31,6 @@ struct hash_table * hash_table_new(int size, void (* free_node)(void *)) {
   table->population = 0;
   table->growth_proportion = 0.7;
   table->shrink_proportion = 0.25;
-  table->free_node = free_node;
   table->storage = calloc(table->size, sizeof(struct hash_node *));
 
   if(table->storage == NULL) {
@@ -43,34 +42,35 @@ struct hash_table * hash_table_new(int size, void (* free_node)(void *)) {
   return table;
 }
 
-void hash_node_free(struct hash_node * node, void (*free_data)(void*)) {
-  free_data(node->data);
-  free(node);
-}
-
-void hash_nodes_free(struct hash_node * node, void (*free_data)(void*)) {
+void hash_node_free(struct hash_node * node) {
   if (node) {
-    hash_nodes_free(node->next, free_data);
-    hash_node_free(node, free_data);
+    free(node);
   }
 }
 
-void hash_table_free(struct hash_table *table) {
+void hash_nodes_free(struct hash_node * node) {
+  if (node) {
+    hash_nodes_free(node->next);
+    hash_node_free(node);
+  }
+}
+
+void hash_table_destroy(struct hash_table *table) {
   int i = 0;
   for(; i < table->size; i++) {
     if(table->storage[i] != NULL) {
-      hash_nodes_free(table->storage[i], table->free_node);
+      hash_nodes_free(table->storage[i]);
     }
   }
   free(table->storage);
   free(table);
 }
 
-int hash_table_store(struct hash_table * table, char * word, void * elem) {
+void * hash_table_store(struct hash_table * table, char * word, void * elem) {
   return hash_table_store_with_resize(table, word, elem, 1);
 }
 
-int hash_table_store_with_resize(struct hash_table * table, char * word, void * elem, int consider_resize) {
+void * hash_table_store_with_resize(struct hash_table * table, char * word, void * elem, int consider_resize) {
   struct hash_node * dummy = table->storage[lua_hash(word)%table->size];
 
   if (dummy) {
@@ -78,9 +78,9 @@ int hash_table_store_with_resize(struct hash_table * table, char * word, void * 
     struct hash_node * head = dummy;
     while (head) {
       if (strcmp(head->word, word) == 0) {
-        table->free_node(head->data);
+        dummy = head->data;
         head->data = elem;
-        return 0;
+        return dummy;
       }
       head = head->next;
     }
@@ -98,7 +98,6 @@ int hash_table_store_with_resize(struct hash_table * table, char * word, void * 
 		table->population ++;
   }
 
-
   if (consider_resize) {
     hash_table_resize(table);
   }
@@ -106,8 +105,9 @@ int hash_table_store_with_resize(struct hash_table * table, char * word, void * 
   return 0;
 }
 
-int hash_table_delete(struct hash_table * table, char * word) {
+void * hash_table_delete(struct hash_table * table, char * word) {
   struct hash_node * head = table->storage[lua_hash(word) % table->size], *prev = NULL;
+  void * old_data = NULL;
 
   while (head) {
     if (strcmp(head->word, word) == 0) {
@@ -117,17 +117,18 @@ int hash_table_delete(struct hash_table * table, char * word) {
         table->storage[lua_hash(word) % table->size] = head->next;
       }
 
-      hash_node_free(head, table->free_node);
+      old_data = head->data;
+      hash_node_free(head);
       table->population--;
       hash_table_resize(table);
-      return 0;
+      return old_data;
     }
 
     prev = head;
     head = head->next;
   }
 
-  return 1;
+  return NULL;
 }
 
 void hash_table_resize(struct hash_table * table) {
@@ -183,9 +184,9 @@ struct hash_node * hash_table_get_hash_node(struct hash_table* table, char * wor
     while(head != NULL) {
       if (strcmp(head->word, word) == 0) {
         return head;
-      } else {
-        head = head->next;
       }
+
+      head = head->next;
     }
   }
   return NULL;
