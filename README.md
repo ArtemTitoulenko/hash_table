@@ -14,6 +14,8 @@ This is a short (288 loc), simple hash table implementation in C. It has evolved
       const char * name;
       int credit;
     };
+    
+    void free_fn(void * data) {}
 
     int main(int argc, char ** argv) {
       /* create a new hash table, (table size)
@@ -49,7 +51,7 @@ This is a short (288 loc), simple hash table implementation in C. It has evolved
       free(cl2);
     
       /* free the table automagically*/
-      hash_table_destroy(table);
+      hash_table_destroy(table, free_fn);
       return 0;
     }
     
@@ -90,6 +92,10 @@ Attempts to delete an element from the hash table. Returns the element that was 
 ### char \*\* hash_table_get_all_keys(\* table)
 
 Returns an array of `char *`'s that point to all of the keys in the table.  
+
+### void hash_table_destroy(\* table, void (\*free_fn)(void*))
+
+Calls `free_fn` on each value stored in the hash table, and then destroys all of the internal nodes and the hash table itself.
 
 ## LICENSE
 
