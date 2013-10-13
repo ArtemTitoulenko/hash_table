@@ -42,24 +42,25 @@ struct hash_table * hash_table_new(int size) {
   return table;
 }
 
-void hash_node_free(struct hash_node * node) {
+void hash_node_free(struct hash_node * node, void (*free_fn)(void*)) {
   if (node) {
+    free_fn(node->data);
     free(node);
   }
 }
 
-void hash_nodes_free(struct hash_node * node) {
+void hash_nodes_free(struct hash_node * node, void (*free_fn)(void*)) {
   if (node) {
-    hash_nodes_free(node->next);
-    hash_node_free(node);
+    hash_nodes_free(node->next, free_fn);
+    hash_node_free(node, free_fn);
   }
 }
 
-void hash_table_destroy(struct hash_table *table) {
+void hash_table_destroy(struct hash_table *table, void (*free_fn)(void*)) {
   int i = 0;
   for(; i < table->size; i++) {
     if(table->storage[i] != NULL) {
-      hash_nodes_free(table->storage[i]);
+      hash_nodes_free(table->storage[i], free_fn);
     }
   }
   free(table->storage);
@@ -118,7 +119,9 @@ void * hash_table_delete(struct hash_table * table, char * word) {
       }
 
       old_data = head->data;
-      hash_node_free(head);
+      if (head) {
+        free(head);
+      }
       table->population--;
       hash_table_resize(table);
       return old_data;

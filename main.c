@@ -9,6 +9,8 @@ struct client {
   int credit;
 };
 
+void free_fn(void * data) {}
+
 int main(int argc, char ** argv) {
 	int i;
   struct hash_table * table = hash_table_new(1);
@@ -34,11 +36,11 @@ int main(int argc, char ** argv) {
 	for (i = 0; i < table->population; i++) {
 		printf("key: %s\n", keys[i]);
 	}
-	
+
 	free(keys);
 	free(cli);
 	free(cl2);
 
-  hash_table_destroy(table);
+  hash_table_destroy(table, free_fn);
   return 0;
 }

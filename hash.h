@@ -22,12 +22,12 @@ struct hash_table {
 
 /* hash node structures */
 struct hash_node * hash_node_new(char * word, void * elem);
-void hash_nodes_free(struct hash_node * node);
-void hash_node_free(struct hash_node * node);
+void hash_nodes_free(struct hash_node * node, void (*free_fn)(void*));
+void hash_node_free(struct hash_node * node, void (*free_fn)(void*));
 
 /* hash table create and destroy */
 struct hash_table* hash_table_new(int size);
-void hash_table_destroy(struct hash_table * table);
+void hash_table_destroy(struct hash_table * table, void (*free_fn)(void*));
 
 /* store */
 void * hash_table_store(struct hash_table * table, char * word, void * node);
